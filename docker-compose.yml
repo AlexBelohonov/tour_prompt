@@ -1,0 +1,48 @@
+version: '3.3'
+
+volumes:
+  rabbitmq_vol:
+    external: false
+  postgres_vol:
+    external: false
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.7-management
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+    volumes:
+      - rabbitmq_vol:/var/lib/rabbitmq
+
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_vol:/var/lib/postgresql/data/
+
+  web:
+    build: .
+    command: python tour_prompt/manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  celery:
+    build: .
+    command: celery -A tour_prompt worker -l info
+    environment:
+      - CELERY_BROKER_URL=amqp://user:password@rabbitmq:5672//
+      - CELERY_RESULT_BACKEND=rpc://user:password@rabbitmq:5672//
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - rabbitmq
