@@ -7,7 +7,7 @@ verify_ssl = true
 
 [packages]
 scrapy = "*"
-django = "==2.2.9"
+django = "==2.2.20"
 celery = "*"
 psycopg2 = "*"
 prospector= "*"
